@@ -1,0 +1,102 @@
+stages:
+  - .pre
+  # - unit
+  - build
+  - merge_build
+  - deploy
+
+
+variables:
+  ITP_GIT_USERNAME: ci
+  ITP_GET_PASSWD: ci
+
+
+start_build_main:
+  stage: .pre
+  before_script:
+    - ls
+    - echo $BUILD_TAGS
+    - rm -f /home/share/debs/*.deb
+  script:
+    - pwd
+    - sed -i "s/BUILDVERSION/$BUILD_TAGS/g" CHANGELOG
+    - cp CHANGELOG /home/share/debs/build_CHANGELOG
+  only:
+    variables:
+      - $BUILD_TAGS
+
+
+# init_unit:
+#   stage: unit
+#   script:
+#     - echo "----------------For code unit test-----------"
+#     - echo $ITP_GIT_USERNAME
+#     # do env init for code unit
+#   only:
+#     variables:
+#       - $BUILD_TAGS
+
+
+trigger_second-pro:
+  stage: build
+  variables:
+    BUILD_TAGS: ${BUILD_TAGS}
+    ENVIRONMENT: unit
+  trigger:
+    project: main/second-pro
+    strategy: depend
+    branch: master
+  rules:
+    - changes:
+        - CHANGELOG
+
+
+trigger_third-pro:
+  stage: build
+  variables:
+    BUILD_TAGS: ${BUILD_TAGS}
+    ENVIRONMENT: unit
+  trigger:
+    project: main/third-pro
+    strategy: depend
+    branch: master
+  rules:
+    - changes:
+        - CHANGELOG
+
+
+merge_build_deb:
+  stage: merge_build
+  variables:
+      BUILD_TAGS: ${BUILD_TAGS}
+      ENVIRONMENT: unit
+  trigger:
+      project: other/build-deb-template
+      strategy: depend
+      branch: master
+  rules:
+    - changes:
+        - CHANGELOG
+
+
+post_build_deb:
+  stage: deploy
+  before_script:
+    - pwd
+    - v1=$(echo $BUILD_TAGS| tr '-' '\n'|sed -n 1'p')
+  script:
+    - pwd
+    - mkdir -p /home/share/release/main/$v1/$BUILD_TAGS
+    - cp /home/share/debs/*.deb /home/share/release/main/$v1/$BUILD_TAGS
+    - cp /home/share/debs/lib/* /home/share/release/main/$v1/$BUILD_TAGS
+    - cp /home/share/debs/lib/._install.sh /home/share/release/main/$v1/$BUILD_TAGS
+    - ls /home/share/release/main/$v1/$BUILD_TAGS
+    - echo $BUILD_TAGS
+    - python3 build.py check $(ls -la /home/share/release/main/$v1/$BUILD_TAGS |grep "^-"| wc -l)
+    - pushd /home/share/release/main/$v1/$BUILD_TAGS
+    - smbclient //file4.main.com/Release-build --directory main/ -c "prompt OFF;mkdir $v1;cd $v1;mkdir $BUILD_TAGS;cd $BUILD_TAGS;mput *"
+    - popd
+    - python3 email_send.py $BUILD_TAGS
+  rules:
+    - changes:
+        - CHANGELOG
