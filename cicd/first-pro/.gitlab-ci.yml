@@ -7,8 +7,8 @@ stages:
 
 
 variables:
-  ITP_GIT_USERNAME: ci
-  ITP_GET_PASSWD: ci
+  GIT_USERNAME: ci
+  GET_PASSWD: 12345
 
 
 start_build_main:
@@ -30,7 +30,7 @@ start_build_main:
 #   stage: unit
 #   script:
 #     - echo "----------------For code unit test-----------"
-#     - echo $ITP_GIT_USERNAME
+#     - echo $GIT_USERNAME
 #     # do env init for code unit
 #   only:
 #     variables:
@@ -89,7 +89,6 @@ post_build_deb:
     - mkdir -p /home/share/release/main/$v1/$BUILD_TAGS
     - cp /home/share/debs/*.deb /home/share/release/main/$v1/$BUILD_TAGS
     - cp /home/share/debs/lib/* /home/share/release/main/$v1/$BUILD_TAGS
-    - cp /home/share/debs/lib/._install.sh /home/share/release/main/$v1/$BUILD_TAGS
     - ls /home/share/release/main/$v1/$BUILD_TAGS
     - echo $BUILD_TAGS
     - python3 build.py check $(ls -la /home/share/release/main/$v1/$BUILD_TAGS |grep "^-"| wc -l)
