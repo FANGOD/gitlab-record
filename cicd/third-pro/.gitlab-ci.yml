@@ -8,7 +8,7 @@ build_job:
     before_script:
       - echo $BUILD_TAGS
     script:
-      - time docker save dockerhub.io/main/mrs:$BUILD_TAGS dockerhub.io/main/zodiac:$BUILD_TAGS dockerhub.io/main/log-enrichment:$BUILD_TAGS > mainxrs.tar
+      - time docker save dockerhub.io/main/first-pro:$BUILD_TAGS dockerhub.io/main/second-pro:$BUILD_TAGS dockerhub.io/main/third-pro:$BUILD_TAGS > mainxrs.tar
       - time pbzip2 -9 -p15 -m5000 mainxrs.tar
       - sed -i "s/mainxrs (1.0.3)/mainxrs ($BUILD_TAGS)/" debian/changelog
       - time dpkg-buildpackage -j8 -Zbzip2 || true
