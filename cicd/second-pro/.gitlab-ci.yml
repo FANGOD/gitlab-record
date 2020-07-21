@@ -1,0 +1,27 @@
+stages:
+  - build
+  - tag
+
+build_job:
+    stage: build
+    before_script:
+      - echo $BUILD_TAGS
+    script:
+      - sed -i "s/BUILDVERSION/$BUILD_TAGS/g" debian/changelog
+      - dpkg-buildpackage || true
+      - mv ../*.deb /home/share/debs/
+    only:
+      - triggers
+      - pipelines
+
+
+add_tag:
+    stage: tag
+    before_script:
+      - echo $BUILD_TAGS
+    script:
+      - git tag "$BUILD_TAGS" || true
+      - git push --tags http://$GIT_USERNAME:$GET_PASSWD@git.main.com/main/mainserver.git HEAD:master
+    only:
+      - triggers
+      - pipelines
